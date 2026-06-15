@@ -30,8 +30,6 @@ Tile {
     if (app.activeMe) {
       if (dimState){
         app.startGetHomeWizardsTimerTimerSpeed(app.syncSlow)
-      } else {
-        app.startGetHomeWizardsTimerTimerSpeed(app.syncFast)
       }
     }
   }

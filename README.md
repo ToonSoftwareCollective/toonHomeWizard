@@ -32,34 +32,37 @@ This app is/may become available in the Toon Store but when you want to do it ma
 
     - on Toon create a folder /qmf/qml/apps/toonHomeWizard
     - put at least the qml files and the drawables folder in the toonHomeWizard folder
+    - to prepare for future updates via the Toon Store also copy version.txt
     - restart the GUI / reboot your Toon
     - add a tile for 'HomeWizard' ( green slider switch )
+    - for updates you copy the files again or start using the Toon Store
+      (to switch from manual to Toon Store you use the Toon Store to uninstall and install again)
 
 Thanks for reading and enjoy the HomeWizard app.
 
 <table border = 1 bordercolor ="red" align = center>
 <tr>
 <td>
-<img width="400" height="240" src="https://github.com/JackV2020/appData/blob/main/homewizardscreenshots/homewizard_screenshot_1.png">
+<img width="400" height="240" src="https://github.com/JackV2020/appData/blob/main/toonHomeWizardscreenshots/toonHomeWizard_screenshot_1.png">
 </td>
 <td>
-<img width="400" height="240" src="https://github.com/JackV2020/appData/blob/main/homewizardscreenshots/homewizard_screenshot_2.png">
-</td>
-</tr>
-<tr>
-<td>
-<img width="400" height="240" src="https://github.com/JackV2020/appData/blob/main/homewizardscreenshots/homewizard_screenshot_3.png">
-</td>
-<td>
-<img width="400" height="240" src="https://github.com/JackV2020/appData/blob/main/homewizardscreenshots/homewizard_screenshot_4.png">
+<img width="400" height="240" src="https://github.com/JackV2020/appData/blob/main/toonHomeWizardscreenshots/toonHomeWizard_screenshot_2.png">
 </td>
 </tr>
 <tr>
 <td>
-<img width="400" height="240" src="https://github.com/JackV2020/appData/blob/main/homewizardscreenshots/homewizard_screenshot_5.png">
+<img width="400" height="240" src="https://github.com/JackV2020/appData/blob/main/toonHomeWizardscreenshots/toonHomeWizard_screenshot_3.png">
 </td>
 <td>
-<img width="400" height="240" src="https://github.com/JackV2020/appData/blob/main/homewizardscreenshots/homewizard_screenshot_6.png">
+<img width="400" height="240" src="https://github.com/JackV2020/appData/blob/main/toonHomeWizardscreenshots/toonHomeWizard_screenshot_4.png">
+</td>
+</tr>
+<tr>
+<td>
+<img width="400" height="240" src="https://github.com/JackV2020/appData/blob/main/toonHomeWizardscreenshots/toonHomeWizard_screenshot_5.png">
+</td>
+<td>
+<img width="400" height="240" src="https://github.com/JackV2020/appData/blob/main/toonHomeWizardscreenshots/toonHomeWizard_screenshot_6.png">
 </td>
 </tr>
 </table>

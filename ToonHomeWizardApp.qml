@@ -43,6 +43,7 @@ App {
   property variant deviceSwitchEnable : []
   property variant deviceKWHYesterday : [] // today=current-yesterday
   property variant deviceKWHLastWeek : []  // week=current-last week
+  property variant deviceKWHLastMonth : []  // month=current-last mont
   property variant deviceKWHOffset : []
   property int kWhDecimals : 3 // 0..3 on APP setup screen
 
@@ -70,8 +71,9 @@ App {
   // kWh column options  ( only selected option value is saved )
   property int kWhToday : 1
   property int kWhWeek : 2 // week is monday..sunday
-  property int kWhMinOffset : 3
-  property int kWhTotal : 4
+  property int kWhMonth : 3
+  property int kWhMinOffset : 4
+  property int kWhTotal : 5
   property int kWhColumn : kWhToday
 
   // Default signal strength, true = dBm, false = %
@@ -95,6 +97,9 @@ App {
   property int syncSlow : 60  // fixed in seconds
   property int syncFast : 10  // fixed in seconds
   property int syncIntervalms // actual interval in ms
+
+  property bool settingsActive : false // when active, timers do nothing
+//  onSettingsActiveChanged: { log("New value settingsActive: "+settingsActive) }
 
   // The timers control which HomeWizard device is polled for data
   property int index_device_reading
@@ -185,11 +190,12 @@ function dumpProperties(obj, desc) {
       }
       deviceKWHYesterday.push( 0.0 )
       deviceKWHLastWeek.push( 0.0 )
+      deviceKWHLastMonth.push( 0.0 )
       deviceKWHOffset.push( 0.0 )
       deviceKWH.push( 0.0 )             // we did not read anything yet
       deviceActive.push( false )        // no ip yet so not active
       deviceVisible.push( false )       // visible when true
-      deviceSwitchEnable.push( false )  // enabled when true
+      deviceSwitchEnable.push( true )   // disabled when false
       deviceOke.push( true )            // assume communication is oke
       deviceOn.push( false )            // assume devices are off
       deviceWatts.push( 0.0 )           // we did not read anything yet
@@ -210,6 +216,7 @@ function dumpProperties(obj, desc) {
       if ('kWhColumn' in userSettingsJSON ) { kWhColumn = userSettingsJSON['kWhColumn'] }
       if ('deviceKWHYesterday' in userSettingsJSON ) { deviceKWHYesterday = userSettingsJSON['deviceKWHYesterday'] }
       if ('deviceKWHLastWeek' in userSettingsJSON ) { deviceKWHLastWeek = userSettingsJSON['deviceKWHLastWeek'] }
+      if ('deviceKWHLastMonth' in userSettingsJSON ) { deviceKWHLastMonth = userSettingsJSON['deviceKWHLastMonth'] }
       if ('deviceKWHYesterdayDate' in userSettingsJSON ) { deviceKWHYesterdayDate = userSettingsJSON['deviceKWHYesterdayDate'] }
       if ('deviceKWHOffset' in userSettingsJSON ) { deviceKWHOffset = userSettingsJSON['deviceKWHOffset'] }
       if ('homeWizardDataOnTile' in userSettingsJSON ) { homeWizardDataOnTile = userSettingsJSON['homeWizardDataOnTile'] }
@@ -240,6 +247,10 @@ function dumpProperties(obj, desc) {
 // each new monday also save deviceKWHLastWeek
           deviceKWHLastWeek[ii] = deviceKWH[ii]
         }
+        if (today.getDate() == 1 ) {
+// each new month also save deviceKWHLastMonth
+          deviceKWHLastMonth[ii] = deviceKWH[ii]
+        }
       }
       saveSettings()
     }
@@ -255,6 +266,7 @@ function dumpProperties(obj, desc) {
         "kWhColumn" : kWhColumn,
         "deviceKWHYesterday" : deviceKWHYesterday,
         "deviceKWHLastWeek" : deviceKWHLastWeek,
+        "deviceKWHLastMonth" : deviceKWHLastMonth,
         "deviceKWHYesterdayDate" : deviceKWHYesterdayDate,
         "deviceKWHOffset" : deviceKWHOffset,
         "kWhDecimals" : kWhDecimals,
@@ -307,7 +319,7 @@ function dumpProperties(obj, desc) {
 
   Timer {
     id : getHomeWizardStateTimeoutTimer
-    interval : 2000 // timeout of 2 seconds
+    interval : 4000 // timeout of 4 seconds
     running : false
     repeat : false
     onTriggered: {
@@ -336,16 +348,18 @@ function dumpProperties(obj, desc) {
             deviceWatts[xhrGetDataCurrentIndex] = xhrGetDataJsonResponse['active_power_w']
             device_wifi[xhrGetDataCurrentIndex] = xhrGetDataJsonResponse['wifi_strength']
             deviceKWH[xhrGetDataCurrentIndex] = xhrGetDataJsonResponse['total_power_import_kwh']
-            // when deviceKWHYesterday and deviceKWHLastWeek are 0 they have to start from now
+            // when deviceKWHYesterday, LastWeek and Month are 0 they have to start from now
             if ( deviceKWHYesterday[xhrGetDataCurrentIndex] == 0 ) { deviceKWHYesterday[xhrGetDataCurrentIndex] = deviceKWH[xhrGetDataCurrentIndex] }
             if ( deviceKWHLastWeek[xhrGetDataCurrentIndex]  == 0 ) { deviceKWHLastWeek[xhrGetDataCurrentIndex]  = deviceKWH[xhrGetDataCurrentIndex] }
+            if ( deviceKWHLastMonth[xhrGetDataCurrentIndex]  == 0 ){ deviceKWHLastMonth[xhrGetDataCurrentIndex]  = deviceKWH[xhrGetDataCurrentIndex] }
 
             if (xhrGetDataCurrentIndex == 8) {
               // this is the P1 Meter with a 2nd KWH field for export which is in 'xhrGetDataCurrentIndex + 1'
               deviceKWH[xhrGetDataCurrentIndex+1] = xhrGetDataJsonResponse['total_power_export_kwh']
-              // when deviceKWHYesterday and deviceKWHLastWeek are 0 they have to start from now
+              // when deviceKWHYesterday, LastWeek and Month are 0 they have to start from now
               if ( deviceKWHYesterday[xhrGetDataCurrentIndex + 1] == 0 ) { deviceKWHYesterday[xhrGetDataCurrentIndex + 1] = deviceKWH[xhrGetDataCurrentIndex + 1] }
-              if (  deviceKWHLastWeek[xhrGetDataCurrentIndex + 1] == 0 ) {  deviceKWHLastWeek[xhrGetDataCurrentIndex + 1] = deviceKWH[xhrGetDataCurrentIndex + 1] }
+              if (  deviceKWHLastWeek[xhrGetDataCurrentIndex + 1] == 0 ) { deviceKWHLastWeek[xhrGetDataCurrentIndex + 1] = deviceKWH[xhrGetDataCurrentIndex + 1] }
+              if (  deviceKWHLastMonth[xhrGetDataCurrentIndex + 1] == 0 ){ deviceKWHLastMonth[xhrGetDataCurrentIndex + 1] = deviceKWH[xhrGetDataCurrentIndex + 1] }
             }
             deviceOke[xhrGetDataCurrentIndex] = true
           } catch(e) {
@@ -485,6 +499,8 @@ function dumpProperties(obj, desc) {
 
       // NOTE: to allow XMLHttpRequest to finish it runs 15 times.
 
+      if ( settingsActive ) { index_device_reading = 15 } // force data collection stop
+
       // skip inactive devices
       while ( ( ! deviceActive[index_device_reading] ) && (index_device_reading < 9)  ) {
         index_device_reading = index_device_reading + 1 ;
@@ -522,6 +538,7 @@ function dumpProperties(obj, desc) {
                   deviceKWH[index_device] = deviceKWH[first_index]
                   deviceKWHYesterday[index_device] = deviceKWHYesterday[first_index]
                   deviceKWHLastWeek[index_device] = deviceKWHLastWeek[first_index]
+                  deviceKWHLastMonth[index_device] = deviceKWHLastMonth[first_index]
                   deviceOn[index_device] = deviceOn[first_index]
                 }
               }
@@ -549,13 +566,15 @@ function dumpProperties(obj, desc) {
     repeat: true
     triggeredOnStart: true
     onTriggered: {
-      if (getHomeWizardsTimer.running) {
-        debug && log("Skip getHomeWizardsTimer")
-      } else {
-        ignoringErrors = ! ignoringErrors
-        index_device_reading = 0 ;
-        getHomeWizardsTimer.start()
-        debug && log("Started getHomeWizardsTimer")
+      if ( ! settingsActive ) {
+        if (getHomeWizardsTimer.running) {
+          debug && log("Skip getHomeWizardsTimer")
+        } else {
+          ignoringErrors = ! ignoringErrors
+          index_device_reading = 0 ;
+          getHomeWizardsTimer.start()
+          debug && log("Started getHomeWizardsTimer")
+        }
       }
     }
   }

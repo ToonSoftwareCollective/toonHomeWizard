@@ -1,3 +1,6 @@
+1.0.1
+- by JackV
+- add Month kWh
 1.0.0
 - by JackV
 - first public release

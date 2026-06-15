@@ -61,7 +61,7 @@ Screen {
 
       deviceSettingsPanelHelp.visible = true
       var i = 0
-      for (i = 0 ; i < 8 ; i++ ) {
+      for (i = 0 ; i < 9 ; i++ ) {
         deviceSettingsPanelHelp.visible = deviceSettingsPanelHelp.visible
           && ( ! app.deviceActive[i] )
       }
@@ -70,6 +70,8 @@ Screen {
       updateScreenData()
 
     } else {
+      app.settingsActive = false
+      app.startGetHomeWizardsTimerTimerSpeed(app.syncSlow)
       activeMe = false
     }
   }
@@ -141,11 +143,12 @@ Screen {
       p3.checked = (app.homeWizardDataOnTile == app.homeWizardDataOnTileP1Meter)
       p3.visible = app.deviceActive[8]
 
-      // k1 .. k4 for kWh selection
+      // k1 .. k5 for kWh selection
       k1.checked = (app.kWhColumn == app.kWhToday)
       k2.checked = (app.kWhColumn == app.kWhWeek)
-      k3.checked = (app.kWhColumn == app.kWhMinOffset)
-      k4.checked = (app.kWhColumn == app.kWhTotal)
+      k3.checked = (app.kWhColumn == app.kWhMonth)
+      k4.checked = (app.kWhColumn == app.kWhMinOffset)
+      k5.checked = (app.kWhColumn == app.kWhTotal)
 
       kWhDecimalsvalue.text = app.kWhDecimals
 
@@ -170,14 +173,19 @@ Screen {
         break;
       case app.kWhWeek:
         result = (app.deviceKWH[index] - app.deviceKWHLastWeek[index]).toFixed(app.kWhDecimals)
-       break;
+        break;
+      case app.kWhMonth:
+        result = (app.deviceKWH[index] - app.deviceKWHLastMonth[index]).toFixed(app.kWhDecimals)
+        break;
       case app.kWhMinOffset: // deviceKWHOffset
         result = (app.deviceKWH[index] - app.deviceKWHOffset[index]).toFixed(app.kWhDecimals)
         break;
       case app.kWhTotal:
         result = app.deviceKWH[index].toFixed(app.kWhDecimals)
     }
-    if ( index == 9 ) { result = result * -1 } // this is production to net
+    // just after startup every app.deviceKWH[index] is 0 and calculated results are negative ;-)
+    if ( result < 0 ) { result = 0 } 
+    if ( index == 9 ) { result = (result * -1).toFixed(app.kWhDecimals) } // this is production to net
     return result + " kWh"
   }
 
@@ -1527,7 +1535,7 @@ Screen {
       anchors {
         verticalCenter : parent.verticalCenter
         left : deviceName_8.right
-        leftMargin : buttonmargin * 2 + 59 // 59 = OnOffToggle.width
+        leftMargin : isNxt ? 67 : 54
       }
       Text {
         id : deviceWatts_8_Text
@@ -1658,6 +1666,7 @@ Screen {
     }
 
     onClicked : {
+      app.settingsActive = true // block data collection
       appSetupScreen.visible = true
       deviceSettingsPanel.visible = false
       deviceSettingsPanelHelp.visible = false
@@ -1719,8 +1728,9 @@ Screen {
 
       if ( k1.checked ) { app.kWhColumn = app.kWhToday }
       if ( k2.checked ) { app.kWhColumn = app.kWhWeek }
-      if ( k3.checked ) { app.kWhColumn = app.kWhMinOffset }
-      if ( k4.checked ) { app.kWhColumn = app.kWhTotal }
+      if ( k3.checked ) { app.kWhColumn = app.kWhMonth }
+      if ( k4.checked ) { app.kWhColumn = app.kWhMinOffset }
+      if ( k5.checked ) { app.kWhColumn = app.kWhTotal }
 
       app.kWhDecimals = kWhDecimalsvalue.text
 
@@ -2205,7 +2215,7 @@ Screen {
       id : kWhColumnRadioButtons
 
       width : 300
-      height : isNxt ? 220 : 176
+      height : isNxt ? 250 : 200
       border.width : 0
       color : "#dcdcdc"
       anchors.left : parent.horizontalCenter
@@ -2264,6 +2274,7 @@ Screen {
               k2.checked = false
               k3.checked = false
               k4.checked = false
+              k5.checked = false
             }
           }
         }
@@ -2312,6 +2323,7 @@ Screen {
               k2.checked = true
               k3.checked = false
               k4.checked = false
+              k5.checked = false
             }
           }
         }
@@ -2337,7 +2349,7 @@ Screen {
               color : "transparent"
 
               Rectangle {
-                anchors {
+                anchors{
                   centerIn : parent
                 }
                 width : 16
@@ -2348,7 +2360,7 @@ Screen {
             }
 
             Text {
-              text : "kWh Start"
+              text : "kWh Maand"
               anchors.verticalCenter : rect_k3.verticalCenter
             }
           }
@@ -2360,6 +2372,7 @@ Screen {
               k2.checked = false
               k3.checked = true
               k4.checked = false
+              k5.checked = false
             }
           }
         }
@@ -2396,7 +2409,7 @@ Screen {
             }
 
             Text {
-              text : "kWh Totaal"
+              text : "kWh Start"
               anchors.verticalCenter : rect_k4.verticalCenter
             }
           }
@@ -2408,6 +2421,56 @@ Screen {
               k2.checked = false
               k3.checked = false
               k4.checked = true
+              k5.checked = false
+            }
+          }
+        }
+
+// ---- Radio 5
+
+        Item {
+          id : k5
+          width : 150
+          height : isNxt ? 40 : 32
+
+          property bool checked : false
+
+          Row {
+            spacing : 6
+
+            Rectangle {
+              id : rect_k5
+              width : 32
+              height : 32
+              radius : 16
+              border.width : 1
+              color : "transparent"
+
+              Rectangle {
+                anchors {
+                  centerIn : parent
+                }
+                width : 16
+                height : 16
+                radius : 8
+                color : k5.checked ? "black" : "transparent"
+              }
+            }
+
+            Text {
+              text : "kWh Totaal"
+              anchors.verticalCenter : rect_k5.verticalCenter
+            }
+          }
+
+          MouseArea {
+            anchors.fill : parent
+            onClicked : {
+              k1.checked = false
+              k2.checked = false
+              k3.checked = false
+              k4.checked = false
+              k5.checked = true
             }
           }
         } // end radio
@@ -2518,7 +2581,6 @@ Screen {
       anchors {
         left : kWhDecimalsRectangle.left
         top : kWhDecimalsRectangle.bottom
-        topMargin : rowHeight / 2
       }
       Column {
 
@@ -2645,6 +2707,7 @@ Screen {
       MouseArea {
         anchors.fill : parent
         onClicked : {
+          app.settingsActive = false
           appSetupScreen.appSettingsSave()
         }
       }
@@ -2670,6 +2733,7 @@ Screen {
       MouseArea {
         anchors.fill : parent
         onClicked : {
+          app.settingsActive = false
           updateScreenConfiguration()
           appSetupScreen.visible = false
         }
@@ -2743,6 +2807,7 @@ Screen {
 
     function editDeviceSettings(index) {
       if ( ! deviceSettingsPanel.visible ) {
+        app.settingsActive = true // block data collection
         deviceSettingsPanel.deviceIndex = index
         inputIP.color = "black"
         inputKWHOffset.color = "black"
@@ -2836,7 +2901,7 @@ Screen {
 
       inputKWHOffset.color = "black"
       if (/^[+-]?\d+(\.\d+)?$/.test(inputKWHOffset.text)) {
-        app.deviceKWHOffset[deviceIndex] = inputKWHOffset.text
+        app.deviceKWHOffset[deviceIndex] = inputKWHOffset.text * 1
       } else {
         validInput = false
         inputKWHOffset.color = "red"
@@ -2847,7 +2912,7 @@ Screen {
       if (p1Meter) {
         inputKWHOffset2.color = "black"
         if (/^[+-]?\d+(\.\d+)?$/.test(inputKWHOffset2.text)) {
-          app.deviceKWHOffset[deviceIndex+1] = inputKWHOffset2.text
+          app.deviceKWHOffset[deviceIndex+1] = inputKWHOffset2.text * 1
         } else {
           validInput = false
           inputKWHOffset2.color = "red"
@@ -2869,7 +2934,7 @@ Screen {
 
         app.deviceIP[deviceIndex] = inputIP.text
         app.deviceName[deviceIndex] = inputName.text
-        app.deviceKWHOffset[deviceIndex] = inputKWHOffset.text
+        app.deviceKWHOffset[deviceIndex] = inputKWHOffset.text * 1
 
         app.deviceSwitchEnable[deviceIndex] = ! deviceSwitchEnable.font.strikeout
 
@@ -3204,14 +3269,14 @@ Screen {
       }
       Text {
         anchors.centerIn : parent
-        text : deviceSettingsPanel.p1Meter ? "0.0 0.0" : "0.0"
+        text : deviceSettingsPanel.p1Meter ? "0 0" : "0"
       }
       MouseArea {
         anchors.fill : parent
         onClicked : {
-          inputKWHOffset.text = "0.0"
+          inputKWHOffset.text = 0.0
           if (deviceSettingsPanel.deviceIndex == 8) {
-            inputKWHOffset2.text = "0.0"
+            inputKWHOffset2.text = 0.0
           }
         }
       }
@@ -3260,7 +3325,7 @@ Screen {
     Text {
       id : resetDayWeekCountersText
       height : rowHeight
-      text : "Dag-Week Teller:"
+      text : "Dag-Week-Maand:"
       anchors {
         top : textKWHOffsetPresetTotal.bottom
         left : textKWHOffsetPresetTotal.left
@@ -3521,6 +3586,7 @@ Screen {
       MouseArea {
         anchors.fill : parent
         onClicked : {
+          app.settingsActive = false
           deviceSettingsPanel.deviceSettingsSave()
         }
       }
@@ -3546,6 +3612,7 @@ Screen {
       MouseArea {
         anchors.fill : parent
         onClicked : {
+          app.settingsActive = false
           Qt.inputMethod.hide()
           deviceSettingsPanel.visible = false
         }
@@ -3601,17 +3668,17 @@ Screen {
         font.pixelSize : isNxt ? 20 : 16
         font.bold : true
         text :
-          "Deze APP kan maximaal 8 HomeWizard Energy Sockets bedienen en 1 P1 Meter uitlezen."
+          "Tot 8 HomeWizard Energy Sockets uitlezen en bedienen en 1 P1 Meter uitlezen."
         + "\n"
         + "\nOm een Energy Socket of je P1 meter module toe te voegen volg je deze stappen:"
         + "\n"
         + "\nIn de HomeWizard APP op je telefoon/tablet:"
-        + "\n  - zoek in de settings naar je Energy Socket of P1 Meter en doe 2 dingen..."
-        + "\n  - ga naar {...}, en (1) activeer de schakelaar en (2) vind een IP-adres"
+        + "\n  - zoek in de settings naar je Energy Socket of P1 Meter en doe het volgende"
+        + "\n  - ga naar {...}, activeer de schakelaar en vind its lager een IP-adres"
         + "\n  - dat IP-adres als '192.168.2.123' heb je nodig in de volgende stappen"
         + "\n"
         + "\nIn deze APP op je Toon:"
-        + "\n  - verlaat dit scherm (>> rechtsboven) klik op een Energy Socket of de P1 Meter"
+        + "\n  - verlaat dit scherm (>>), klik op een Energy Socket of de P1 Meter en..."
         + "\n  - met het vraagteken rechtsboven kun je dit informatie scherm weer oproepen"
         + "\n  - bij een Energy Socket staat rechts het tegel segment dat er bij hoort"
         + "\n  - vul het IP-adres in bij 'IP Adres' en wijzig de naam bij 'Naam'"
@@ -3619,29 +3686,32 @@ Screen {
         + "\n  - klik op 'Visible' om het apparaat op je scherm te tonen of te verbergen"
         + "\n"
         + "\nZonder 'Visible' wordt wel data verzameld maar zie je het niet op je scherm."
-        + "\n    Het nut ? Stel je hebt 1 Socket, zet het IP 4 x in de APP."
+        + "\n    Het nut ? Stel je hebt 1 Socket, zet het IP-adres 4 x in de APP."
         + "\n    Dan kleuren 4 van de 8 segmenten op het tegeltje."
         + "\n"
-        + "\nMet Screen Switch 'Enable' kun je de knop op het scherm bedienen"
+        + "\nMet Screen Switch in de stand 'Enable' kun je de knop op het scherm bedienen."
         + "\nAls 'Enable' is doorgehaald wordt het knopje blauw en werkt het knopje niet meer."
-        + "\nIn de telefoon/tablet HomeWizard APP werkt je knop nog wel."
+        + "\nIn de telefoon/tablet HomeWizard APP werkt je knop nog wel. Op Toon niet meer."
         + "\n"
         + "\nWil je in de Toon HomeWizard APP de kWh zien sinds een bepaalde Start kWh?"
         + "\nVul dan het veld 'kWh Start' in."
-        + "\nDe Presets knoppen vullen of 0.0 of het huidige totaal in."
+        + "\nDe Presets knoppen vullen of '0' of het huidige totaal in."
         + "\n"
-        + "\nNieuw apparaat aangesloten? Dan wil je de dag en week tellers resetten."
+        + "\nNieuw apparaat aangesloten? Dan wil je de dag, week en maand tellers resetten."
+        + "\nDeze beginnen op 0 na een reset en na het begin van een dag, week of maand."
+        + "\nDeze tellers zijn dus pas correct na het begin van een nieuwe dag, week of maand."
         + "\n"
         + "\nOp het APP scherm staat rechtsonder een knop voor algemene APP settings."
-        + "\nDaar kun je wat layout instellingen kiezen voor het tegeltje en het APP scherm."
+        + "\nKies daar weergave settings voor het tegeltje en de kWh en WiFi signaalsterkte."
         + "\n"
-        + "\n   >>> LET OP <<<"
+        + "\n           >>> LET OP <<<"
         + "\n"
-        + "\n     Als een HomeWizard niet kan woren uitlezen wordt de ring op het tegeltje rood."
-        + "\n     Op het APP scherm krijgt het apparaat met het probleem een rood randje."
-        + "\n     Vaak lost het zich binnen een minuut op. Duurt het langer?"
-        + "\n     Klopt het IP adres dan nog wel? Controleer het op je telefoon/tablet."
-        + "\n"
+        + "\n    Als een HomeWizard niet kan worden uitlezen wordt de ring op het tegeltje rood."
+        + "\n    Op het APP scherm krijgt het apparaat met het probleem een rood randje."
+        + "\n    Vaak lost het zich binnen een minuut op. Duurt het langer?"
+        + "\n    Is de schakelaar bij {...} in de settings in de telefoon/tablet app nog actief?"
+        + "\n    Klopt het IP adres nog of is dat gewijzigd?"
+        + "\n\n\n\n"
       }
     }
 
